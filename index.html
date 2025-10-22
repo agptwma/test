@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>動物さがしゲーム</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            overflow: hidden;
+            background: linear-gradient(135deg, #a8e063 0%, #56ab2f 100%);
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            touch-action: none;
+            transition: background 2s ease-in-out;
+        }
+        body.bg-evening {
+            background: linear-gradient(135deg, #FF9A56 0%, #FF6B95 100%);
+        }
+        body.bg-night {
+            background: linear-gradient(135deg, #2C3E50 0%, #4A00E0 100%);
+        }
+        body.bg-midnight {
+            background: linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%);
+        }
+        body.bg-aurora {
+            background: linear-gradient(135deg, #00C9FF 0%, #92FE9D 100%);
+        }
+        body.bg-sunset {
+            background: linear-gradient(135deg, #FA8BFF 0%, #2BD2FF 50%, #2BFF88 100%);
+        }
+        body.bg-galaxy {
+            background: linear-gradient(135deg, #360033 0%, #0b8793 100%);
+        }
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        #playArea {
+            position: absolute;
+            top: 110px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+        }
+        #animalContainer {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        #instruction {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,255,255,0.95);
+            padding: 8px 20px;
+            border-radius: 12px;
+            border: 3px solid #FFD700;
+            z-index: 1000;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        #instructionText {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        #targetAnimal {
+            font-size: 32px;
+            margin: 0;
+        }
+        #timer {
+            position: fixed;
+            top: 10px;
+            right: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            background: rgba(255,69,0,0.9);
+            padding: 8px 15px;
+            border-radius: 10px;
+            border: 2px solid #fff;
+            z-index: 1000;
+        }
+        #score {
+            position: fixed;
+            top: 58px;
+            left: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            background: rgba(0,128,255,0.9);
+            padding: 8px 15px;
+            border-radius: 10px;
+            border: 2px solid #fff;
+            z-index: 1000;
+        }
+        #highScore {
+            position: fixed;
+            top: 10px;
+            left: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            background: rgba(255,215,0,0.9);
+            padding: 8px 15px;
+            border-radius: 10px;
+            border: 2px solid #fff;
+            z-index: 1000;
+        }
+        .animal-wrapper {
+            position: absolute;
+        }
+        .animal {
+            position: relative;
+            user-select: none;
+            pointer-events: none;
+        }
+        .click-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 60px;
+            height: 60px;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+        .click-layer.correct {
+            z-index: 10000 !important;
+        }
+        .click-layer.incorrect {
+            z-index: auto;
+        }
+        @keyframes floatGentle {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(10px, -5px); }
+            50% { transform: translate(-5px, 10px); }
+            75% { transform: translate(-10px, -5px); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0); }
+            10% { transform: translate(-1px, 0); }
+            20% { transform: translate(1px, 0); }
+            30% { transform: translate(-1px, 0); }
+            40% { transform: translate(1px, 0); }
+            50% { transform: translate(-1px, 0); }
+            60% { transform: translate(1px, 0); }
+            70% { transform: translate(-1px, 0); }
+            80% { transform: translate(1px, 0); }
+            90% { transform: translate(-1px, 0); }
+        }
+        .move-float {
+            animation: floatGentle 3s ease-in-out infinite;
+        }
+        .move-shake {
+            animation: shake 0.5s ease-in-out infinite;
+        }
+        @keyframes correct {
+            0% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.8) rotate(15deg); }
+            50% { transform: scale(1.8) rotate(-15deg); }
+            75% { transform: scale(1.8) rotate(15deg); }
+            100% { transform: scale(2.5) rotate(0deg); opacity: 0; }
+        }
+        .correct-pop {
+            animation: correct 0.6s ease-out forwards !important;
+            z-index: 9999 !important;
+        }
+        @keyframes wrong {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+        .wrong-shake {
+            animation: wrong 0.4s ease-out !important;
+        }
+        .particle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9998;
+            font-size: 28px;
+            animation: particleFloat 1s ease-out forwards;
+        }
+        @keyframes particleFloat {
+            0% {
+                transform: translate(0, 0) scale(1) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--dx), var(--dy)) scale(0.5) rotate(720deg);
+                opacity: 0;
+            }
+        }
+        #startScreen, #gameOverScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .title {
+            font-size: 56px;
+            color: #FFD700;
+            margin-bottom: 25px;
+            text-shadow: 4px 4px 8px rgba(0,0,0,0.7);
+        }
+        .subtitle {
+            font-size: 24px;
+            color: #fff;
+            margin-bottom: 35px;
+            text-align: center;
+            line-height: 1.6;
+        }
+        button {
+            font-size: 36px;
+            padding: 18px 50px;
+            background: linear-gradient(135deg, #FF6B6B, #FF4444);
+            color: #fff;
+            border: 4px solid #fff;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            transition: transform 0.2s;
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+        #finalScore {
+            font-size: 48px;
+            color: #FFD700;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="highScore">🏆 0</div>
+        <div id="score">⭐ 0</div>
+        <div id="timer">⏱️ 30</div>
+        
+        <div id="instruction">
+            <div id="instructionText">これをさがせ!</div>
+            <div id="targetAnimal"></div>
+        </div>
+        
+        <div id="playArea">
+            <div id="animalContainer"></div>
+        </div>
+        
+        <div id="startScreen">
+            <div class="title">🦁 動物さがし 🐰</div>
+            <div class="subtitle">
+                指定された動物を見つけてタップ!<br>
+                正解: +3秒 ⏱️<br>
+                不正解: -1秒 ⚠️
+            </div>
+            <button onclick="startGame()">スタート</button>
+        </div>
+        
+        <div id="gameOverScreen" style="display: none;">
+            <div class="title">🎉 おわり! 🎉</div>
+            <div id="finalScore"></div>
+            <button onclick="startGame()">もう一回!</button>
+        </div>
+    </div>
+
+    <script>
+        const container = document.getElementById('animalContainer');
+        const scoreEl = document.getElementById('score');
+        const highScoreEl = document.getElementById('highScore');
+        const timerEl = document.getElementById('timer');
+        const instructionEl = document.getElementById('instruction');
+        const targetAnimalEl = document.getElementById('targetAnimal');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const finalScoreEl = document.getElementById('finalScore');
+        
+        const animals = {
+            lion: '🦁',
+            rabbit: '🐰',
+            giraffe: '🦒',
+            zebra: '🦓',
+            cat: '🐱',
+            cow: '🐄'
+        };
+        
+        const animalSizes = {
+            lion: 52,
+            rabbit: 52,
+            giraffe: 52,
+            zebra: 52,
+            cat: 42,
+            cow: 52
+        };
+        
+        let score = 0;
+        let highScore = 0;
+        let timeLeft = 30;
+        let gameActive = false;
+        let timerInterval;
+        let currentTarget = null;
+        let movingAnimals = [];
+        let loopDirection = { x: 0, y: 0 };
+        let audioContext = null;
+        let bgmAudio = null;
+        
+        function getRandomAnimal() {
+            const keys = Object.keys(animals);
+            return keys[Math.floor(Math.random() * keys.length)];
+        }
+        
+        function updateBackground() {
+            document.body.classList.remove('bg-evening', 'bg-night', 'bg-midnight', 'bg-aurora', 'bg-sunset', 'bg-galaxy');
+            if (score >= 50) {
+                document.body.classList.add('bg-galaxy');
+            } else if (score >= 40) {
+                document.body.classList.add('bg-sunset');
+            } else if (score >= 30) {
+                document.body.classList.add('bg-aurora');
+            } else if (score >= 20) {
+                document.body.classList.add('bg-midnight');
+            } else if (score >= 15) {
+                document.body.classList.add('bg-night');
+            } else if (score >= 8) {
+                document.body.classList.add('bg-evening');
+            }
+        }
+        
+        function createParticles(x, y) {
+            const symbols = ['⭐', '✨', '💫', '🌟', '⚡', '🎉'];
+            for (let i = 0; i < 10; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                
+                const angle = (Math.PI * 2 * i) / 10;
+                const distance = 60 + Math.random() * 40;
+                particle.style.setProperty('--dx', Math.cos(angle) * distance + 'px');
+                particle.style.setProperty('--dy', Math.sin(angle) * distance + 'px');
+                
+                document.body.appendChild(particle);
+                
+                setTimeout(() => particle.remove(), 1000);
+            }
+        }
+        
+        function playCorrectSound() {
+            try {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                
+                const now = audioContext.currentTime;
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.type = 'sine';
+                
+                oscillator.frequency.setValueAtTime(523.25, now);
+                oscillator.frequency.setValueAtTime(659.25, now + 0.08);
+                oscillator.frequency.setValueAtTime(783.99, now + 0.16);
+                
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                
+                oscillator.start(now);
+                oscillator.stop(now + 0.3);
+            } catch (e) {
+                console.log('Audio playback error:', e);
+            }
+        }
+        
+        function startBGM() {
+            try {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume().then(() => {
+                        console.log('AudioContext resumed');
+                        playBGMLoop();
+                    });
+                } else {
+                    playBGMLoop();
+                }
+                
+            } catch (e) {
+                console.log('BGM error:', e);
+            }
+        }
+        
+        function startBGM() {
+            try {
+                if (!bgmAudio) {
+                    bgmAudio = new Audio();
+                    bgmAudio.crossOrigin = "anonymous";
+                    bgmAudio.src = 'https://raw.githubusercontent.com/agptwma/test/main/%E3%81%AA%E3%82%93%E3%81%A8%E3%81%84%E3%81%86%E3%81%93%E3%81%A8%E3%81%AF%E3%81%AA%E3%81%84%E6%97%A5%E5%B8%B8.mp3';
+                    bgmAudio.loop = true;
+                    bgmAudio.volume = 0.3;
+                    
+                    bgmAudio.addEventListener('error', (e) => {
+                        console.log('Audio error details:', e);
+                        console.log('Audio error code:', bgmAudio.error);
+                    });
+                    
+                    bgmAudio.addEventListener('loadeddata', () => {
+                        console.log('Audio loaded successfully');
+                    });
+                }
+                
+                const playPromise = bgmAudio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        console.log('BGM started playing');
+                    }).catch(e => {
+                        console.log('BGM playback error:', e);
+                    });
+                }
+                
+            } catch (e) {
+                console.log('BGM error:', e);
+            }
+        }
+        
+        function stopBGM() {
+            if (bgmAudio) {
+                bgmAudio.pause();
+                bgmAudio.currentTime = 0;
+            }
+        }
+        
+        function createLevel() {
+            container.innerHTML = '';
+            
+            movingAnimals.forEach(data => {
+                if (data.interval) clearInterval(data.interval);
+            });
+            movingAnimals = [];
+            
+            const animalKeys = Object.keys(animals);
+            currentTarget = getRandomAnimal();
+            targetAnimalEl.textContent = animals[currentTarget];
+            
+            const playArea = document.getElementById('playArea');
+            const playAreaRect = playArea.getBoundingClientRect();
+            const playAreaWidth = playAreaRect.width;
+            const playAreaHeight = playAreaRect.height;
+            const margin = 10;
+            
+            let baseAnimals = 25;
+            let additionalAnimals = Math.floor(score / 3) * 3;
+            const numAnimals = Math.min(150, baseAnimals + additionalAnimals);
+            
+            const shouldMove = score >= 3;
+            const shouldOverlap = score >= 5;
+            const shouldLoop = score >= 7 && Math.random() < 0.2;
+            
+            const minDistance = shouldOverlap ? 20 : 50;
+            
+            if (shouldLoop) {
+                const directions = [
+                    { x: 1, y: 0 },
+                    { x: -1, y: 0 },
+                    { x: 0, y: 1 },
+                    { x: 0, y: -1 }
+                ];
+                loopDirection = directions[Math.floor(Math.random() * directions.length)];
+            } else {
+                loopDirection = { x: 0, y: 0 };
+            }
+            
+            const positions = [];
+            const maxAttempts = numAnimals * 10;
+            let attempts = 0;
+            
+            while (positions.length < numAnimals && attempts < maxAttempts) {
+                const x = margin + Math.random() * (playAreaWidth - margin * 2 - 60);
+                const y = margin + Math.random() * (playAreaHeight - margin * 2 - 60);
+                
+                let canPlace = true;
+                canPlace = positions.every(pos => {
+                    const dx = pos.x - x;
+                    const dy = pos.y - y;
+                    return Math.sqrt(dx * dx + dy * dy) >= minDistance;
+                });
+                
+                if (canPlace) {
+                    positions.push({ x, y });
+                }
+                
+                attempts++;
+            }
+            
+            const targetPosition = Math.floor(Math.random() * positions.length);
+            
+            positions.forEach((pos, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'animal-wrapper';
+                wrapper.style.left = pos.x + 'px';
+                wrapper.style.top = pos.y + 'px';
+                wrapper.style.width = '60px';
+                wrapper.style.height = '60px';
+                
+                const animal = document.createElement('div');
+                animal.className = 'animal';
+                
+                let animalType;
+                let isCorrect = false;
+                if (index === targetPosition) {
+                    animalType = currentTarget;
+                    isCorrect = true;
+                    wrapper.style.zIndex = 10000;
+                } else {
+                    const otherAnimals = animalKeys.filter(key => key !== currentTarget);
+                    animalType = otherAnimals[Math.floor(Math.random() * otherAnimals.length)];
+                    wrapper.style.zIndex = Math.floor(Math.random() * 1000);
+                }
+                
+                animal.textContent = animals[animalType];
+                animal.style.fontSize = animalSizes[animalType] + 'px';
+                
+                if (shouldMove) {
+                    const moveType = Math.random();
+                    
+                    if (shouldLoop) {
+                        const speed = 1 + Math.random() * 1;
+                        movingAnimals.push({
+                            wrapper: wrapper,
+                            startX: pos.x,
+                            startY: pos.y,
+                            speed: speed,
+                            interval: null,
+                            isCorrect: isCorrect
+                        });
+                        
+                        const moveInterval = setInterval(() => {
+                            if (!gameActive) {
+                                clearInterval(moveInterval);
+                                return;
+                            }
+                            
+                            let currentX = parseFloat(wrapper.style.left);
+                            let currentY = parseFloat(wrapper.style.top);
+                            
+                            currentX += loopDirection.x * speed;
+                            currentY += loopDirection.y * speed;
+                            
+                            if (currentX < -60) currentX = playAreaWidth;
+                            if (currentX > playAreaWidth) currentX = -60;
+                            if (currentY < -60) currentY = playAreaHeight;
+                            if (currentY > playAreaHeight) currentY = -60;
+                            
+                            wrapper.style.left = currentX + 'px';
+                            wrapper.style.top = currentY + 'px';
+                        }, 30);
+                        
+                        movingAnimals[movingAnimals.length - 1].interval = moveInterval;
+                        
+                    } else if (!isCorrect) {
+                        if (moveType < 0.15) {
+                            const speed = 3 + Math.random() * 2;
+                            let vx = (Math.random() - 0.5) * speed;
+                            let vy = (Math.random() - 0.5) * speed;
+                            
+                            movingAnimals.push({
+                                wrapper: wrapper,
+                                vx: vx,
+                                vy: vy,
+                                interval: null,
+                                isCorrect: false
+                            });
+                            
+                            const moveInterval = setInterval(() => {
+                                if (!gameActive) {
+                                    clearInterval(moveInterval);
+                                    return;
+                                }
+                                
+                                let currentX = parseFloat(wrapper.style.left);
+                                let currentY = parseFloat(wrapper.style.top);
+                                
+                                const data = movingAnimals.find(d => d.wrapper === wrapper);
+                                if (data) {
+                                    currentX += data.vx;
+                                    currentY += data.vy;
+                                    
+                                    if (currentX < margin || currentX > playAreaWidth - margin - 60) {
+                                        data.vx *= -1;
+                                    }
+                                    if (currentY < margin || currentY > playAreaHeight - margin - 60) {
+                                        data.vy *= -1;
+                                    }
+                                    
+                                    wrapper.style.left = currentX + 'px';
+                                    wrapper.style.top = currentY + 'px';
+                                }
+                            }, 30);
+                            
+                            movingAnimals[movingAnimals.length - 1].interval = moveInterval;
+                            
+                        } else if (moveType < 0.4) {
+                            animal.classList.add('move-shake');
+                        } else if (moveType < 0.7) {
+                            animal.classList.add('move-float');
+                            animal.style.animationDelay = Math.random() * 3 + 's';
+                            animal.style.animationDuration = (2 + Math.random() * 2) + 's';
+                        }
+                    } else if (isCorrect && Math.random() < 0.5 && !shouldLoop) {
+                        const moveType = Math.random();
+                        if (moveType < 0.5) {
+                            animal.classList.add('move-shake');
+                        } else {
+                            animal.classList.add('move-float');
+                            animal.style.animationDelay = Math.random() * 3 + 's';
+                            animal.style.animationDuration = (2.5 + Math.random() * 1.5) + 's';
+                        }
+                    }
+                }
+                
+                const clickLayer = document.createElement('div');
+                clickLayer.className = 'click-layer ' + (isCorrect ? 'correct' : 'incorrect');
+                clickLayer.dataset.correct = isCorrect;
+                clickLayer.dataset.type = animalType;
+                clickLayer.onclick = (e) => {
+                    e.stopPropagation();
+                    handleClick(clickLayer, animal, wrapper);
+                };
+                
+                wrapper.appendChild(animal);
+                wrapper.appendChild(clickLayer);
+                container.appendChild(wrapper);
+            });
+        }
+        
+        function handleClick(clickLayer, animal, wrapper) {
+            if (!gameActive) return;
+            
+            if (clickLayer.dataset.correct === 'true') {
+                score++;
+                timeLeft = Math.min(30, timeLeft + 3);
+                scoreEl.textContent = '⭐ ' + score;
+                timerEl.textContent = '⏱️ ' + timeLeft;
+                
+                if (score > highScore) {
+                    highScore = score;
+                    highScoreEl.textContent = '🏆 ' + highScore;
+                }
+                
+                updateBackground();
+                
+                playCorrectSound();
+                
+                const rect = wrapper.getBoundingClientRect();
+                createParticles(rect.left + 15, rect.top + 30);
+                
+                animal.className = 'animal';
+                animal.style.animation = 'none';
+                
+                const moveData = movingAnimals.find(d => d.wrapper === wrapper);
+                if (moveData && moveData.interval) {
+                    clearInterval(moveData.interval);
+                }
+                
+                setTimeout(() => {
+                    animal.classList.add('correct-pop');
+                }, 10);
+                
+                clickLayer.onclick = null;
+                
+                setTimeout(() => {
+                    createLevel();
+                }, 600);
+            } else {
+                timeLeft = Math.max(0, timeLeft - 1);
+                timerEl.textContent = '⏱️ ' + timeLeft;
+                
+                if (timeLeft <= 0) {
+                    endGame();
+                    return;
+                }
+                
+                const originalClass = animal.className;
+                animal.classList.add('wrong-shake');
+                setTimeout(() => {
+                    animal.className = originalClass;
+                }, 400);
+            }
+        }
+        
+        function startGame() {
+            if (!audioContext) {
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    console.log('AudioContext created, state:', audioContext.state);
+                } catch (e) {
+                    console.log('AudioContext creation error:', e);
+                }
+            }
+            
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume().then(() => {
+                    console.log('AudioContext resumed successfully');
+                });
+            }
+            
+            score = 0;
+            timeLeft = 30;
+            gameActive = true;
+            
+            scoreEl.textContent = '⭐ ' + score;
+            timerEl.textContent = '⏱️ ' + timeLeft;
+            highScoreEl.textContent = '🏆 ' + highScore;
+            
+            document.body.classList.remove('bg-evening', 'bg-night', 'bg-midnight', 'bg-aurora', 'bg-sunset', 'bg-galaxy');
+            
+            startScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+            instructionEl.style.display = 'block';
+            
+            startBGM();
+            
+            createLevel();
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerEl.textContent = '⏱️ ' + timeLeft;
+                
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+        
+        function endGame() {
+            gameActive = false;
+            clearInterval(timerInterval);
+            
+            stopBGM();
+            
+            movingAnimals.forEach(data => {
+                if (data.interval) clearInterval(data.interval);
+            });
+            movingAnimals = [];
+            
+            let resultText = `スコア: ${score}`;
+            if (score === highScore && score > 0) {
+                resultText += ' 🎉 新記録!';
+            }
+            finalScoreEl.textContent = resultText;
+            
+            gameOverScreen.style.display = 'flex';
+            instructionEl.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
