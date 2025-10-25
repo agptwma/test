@@ -266,19 +266,19 @@
         </div>
         
         <div id="startScreen">
-            <div class="title">🦁 動物さがし 🐰</div>
+            <div class="title">🦁 Find this 🐰</div>
             <div class="subtitle">
-                指定された動物を見つけてタップ!<br>
-                正解: +3秒 ⏱️<br>
+                Find animal and tap!<br>
+                正解: +2秒 ⏱️<br>
                 不正解: -1秒 ⚠️
             </div>
-            <button onclick="startGame()">スタート</button>
+            <button onclick="startGame()">Start</button>
         </div>
         
         <div id="gameOverScreen" style="display: none;">
-            <div class="title">🎉 おわり! 🎉</div>
+            <div class="title">🎉 Finish! 🎉</div>
             <div id="finalScore"></div>
-            <button onclick="startGame()">もう一回!</button>
+            <button onclick="startGame()">Again!</button>
         </div>
     </div>
 
@@ -666,7 +666,7 @@
             
             if (clickLayer.dataset.correct === 'true') {
                 score++;
-                timeLeft = Math.min(30, timeLeft + 3);
+                timeLeft = Math.min(30, timeLeft + 2);
                 scoreEl.textContent = '⭐ ' + score;
                 timerEl.textContent = '⏱️ ' + timeLeft;
                 
