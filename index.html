@@ -303,12 +303,12 @@
         };
         
         const animalSizes = {
-            lion: 52,
-            rabbit: 52,
-            giraffe: 52,
-            zebra: 52,
-            cat: 42,
-            cow: 52
+            lion: 42,
+            rabbit: 42,
+            giraffe: 42,
+            zebra: 42,
+            cat: 37,
+            cow: 42
         };
         
         let score = 0;
@@ -773,7 +773,7 @@
             
             let resultText = `スコア: ${score}`;
             if (score === highScore && score > 0) {
-                resultText += /n' 🎉 New record!!';
+                resultText += ' 🎉 New record!!';
             }
             finalScoreEl.textContent = resultText;
             
