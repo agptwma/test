@@ -269,8 +269,8 @@
             <div class="title">Find this!</div>
             <div class="subtitle">
                 Find animal and tap!<br>
-                Corret: +2秒 ⏱️<br>
-                Wrong: -1秒 ⚠️
+                Corret: +2sec ⏱️<br>
+                Wrong: -1sec ⚠️
             </div>
             <button onclick="startGame()">Start</button>
         </div>
@@ -773,7 +773,7 @@
             
             let resultText = `スコア: ${score}`;
             if (score === highScore && score > 0) {
-                resultText += ' 🎉 新記録!';
+                resultText += /n' 🎉 New record!!';
             }
             finalScoreEl.textContent = resultText;
             
